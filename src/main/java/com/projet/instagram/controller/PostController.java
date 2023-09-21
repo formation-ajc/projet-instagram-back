@@ -32,13 +32,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,18 +64,16 @@ public class PostController {
     private String filePath;
 
     @PostMapping("")
-    public ResponseEntity<?> newPost(@RequestHeader(HttpHeaders.AUTHORIZATION) String headerAuth, @Valid @RequestBody PostRequest postRequest) {
+    public ResponseEntity<?> newPost(@RequestHeader(HttpHeaders.AUTHORIZATION) String headerAuth, @Valid @ModelAttribute PostRequest postRequest) {
         try {
             // On récupère l'email du token qui est l'email avant modification
             String email = jwtUtils.getEmailFromJwtToken(headerAuth.split(" ")[1]);
+            MultipartFile uploadedFile = postRequest.getFile();
+            byte[] fileBytes = uploadedFile.getBytes();
 
+            // Save the byte array to a file
             String filename = UUID.randomUUID().toString();
-
-            FileWriter writer = new FileWriter(filePath + filename);
-            writer.write(postRequest.getData()); // Vous devez définir req.body.data dans votre contexte Java
-            writer.close();
-            System.out.println("Saved!");
-
+            Files.write(Path.of(filePath + filename), fileBytes);
 
             File file = new File();
             file.setName(postRequest.getName());
@@ -121,31 +119,21 @@ public class PostController {
 
             List<PostResponse> postResponses = new ArrayList<>();
 
-            for (Post post: posts) {
-
+            for (Post post : posts) {
                 File file = fileRepository.findByPost(post);
 
-                Path audioPath = Path.of(filePath, file.getSrc());
-                Resource resource = new UrlResource(audioPath.toUri());
+                // Load the file content into a byte array
+                Path path = Path.of(filePath, file.getSrc());
+                Resource resource = new UrlResource(path.toUri());
+
                 if (resource.exists() && resource.isReadable()) {
-                    try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
-                        StringBuilder content = new StringBuilder();
-                        String line;
-
-                        while ((line = reader.readLine()) != null) {
-                            content.append(line);
-                        }
-
-                        String fileContentAsString = content.toString();
-                        postResponses.add(PostResponse.createSportResponse(post, file, fileContentAsString));
+                    try (InputStream inputStream = resource.getInputStream()) {
+                        byte[] fileData = inputStream.readAllBytes();
+                        postResponses.add(PostResponse.createSportResponse(post, file, fileData));
                     } catch (IOException e) {
                         System.out.println("Error reading file: " + e.getMessage());
                     }
-
-//                    return ResponseEntity.ok().body(audioData);
                 } else {
-//                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No audio found!");
                     System.out.println("Impossible de récupérer le fichier : " + file.getName());
                 }
             }

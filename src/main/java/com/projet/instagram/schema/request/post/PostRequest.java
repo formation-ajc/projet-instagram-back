@@ -1,6 +1,7 @@
 package com.projet.instagram.schema.request.post;
 
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.web.multipart.MultipartFile;
 
 public class PostRequest {
     @NotBlank
@@ -10,7 +11,7 @@ public class PostRequest {
     @NotBlank
     private String size;
     @NotBlank
-    private String data;
+    private MultipartFile file;
     @NotBlank
     private Boolean isPrivate;
 
@@ -40,12 +41,20 @@ public class PostRequest {
         this.size = size;
     }
 
-    public String getData() {
-        return data;
+    public MultipartFile getFile() {
+        return file;
     }
 
-    public void setData(String data) {
-        this.data = data;
+    public void setFile(MultipartFile file) {
+        this.file = file;
+    }
+
+    public Boolean getPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(Boolean aPrivate) {
+        isPrivate = aPrivate;
     }
 
     public Boolean getIsPrivate() {
