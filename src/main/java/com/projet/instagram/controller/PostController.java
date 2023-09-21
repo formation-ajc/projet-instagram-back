@@ -3,20 +3,13 @@ package com.projet.instagram.controller;
 import com.projet.instagram.model.File;
 import com.projet.instagram.model.Post;
 import com.projet.instagram.model.User;
-import com.projet.instagram.model.security.RefreshToken;
 import com.projet.instagram.repository.FileRepository;
 import com.projet.instagram.repository.PostRepository;
 import com.projet.instagram.repository.UserRepository;
 import com.projet.instagram.schema.request.post.PostRequest;
-import com.projet.instagram.schema.request.user.UpdatePasswordUserRequest;
-import com.projet.instagram.schema.request.user.UpdateUserRequest;
 import com.projet.instagram.schema.response.post.PostResponse;
 import com.projet.instagram.utils.security.JwtUtils;
 import com.projet.instagram.schema.response.security.MessageResponse;
-import com.projet.instagram.schema.response.security.SignupResponse;
-import com.projet.instagram.service.security.RefreshTokenService;
-import com.projet.instagram.service.security.UserDetailsImpl;
-import com.projet.instagram.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,23 +18,14 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -85,9 +69,9 @@ public class PostController {
 
             Post post = new Post();
             if (userRepository.findByEmail(email).isPresent()) {
-                post.setUserId(userRepository.findByEmail(email).get());
+                post.setUser(userRepository.findByEmail(email).get());
             }
-            post.setFileId(file);
+            post.setFile(file);
             post.setDescription(postRequest.getDescription());
             post.setLikes(0);
             post.setPrivate(postRequest.getIsPrivate());
@@ -115,7 +99,7 @@ public class PostController {
                 user = userRepository.findByEmail(email).get();
             }
 
-            List<Post> posts = postRepository.findByUserId(user);
+            List<Post> posts = postRepository.findByUser(user);
 
             List<PostResponse> postResponses = new ArrayList<>();
 
@@ -145,6 +129,28 @@ public class PostController {
             return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new MessageResponse("Error: Impossible to charge posts!"));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePost(@RequestHeader(HttpHeaders.AUTHORIZATION) String headerAuth, @PathVariable("id") Long idPost) {
+        try {
+            // On récupère l'email du token qui est l'email avant modification
+            String email = jwtUtils.getEmailFromJwtToken(headerAuth.split(" ")[1]);
+            User user = null;
+            if (userRepository.findByEmail(email).isPresent()) {
+                user = userRepository.findByEmail(email).get();
+            }
+
+            postRepository.deleteByIdAndUser(idPost, user);
+
+            return ResponseEntity.ok(new MessageResponse("Success: removal performed!"));
+
+        }
+        catch(Exception e) {// see note 2
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new MessageResponse("Error: Impossible to delete the post!"));
         }
     }
 }

@@ -28,7 +28,7 @@ public class File {
     @Column(name = "src", nullable = false)
     private String src;
 
-    @OneToOne(mappedBy = "fileId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "file", cascade = CascadeType.ALL, orphanRemoval = true)
     private Post post;
 
     public File() {

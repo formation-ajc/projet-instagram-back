@@ -29,11 +29,11 @@ public class Post {
 
     @ManyToOne()
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User userId;
+    private User user;
 
     @OneToOne()
     @JoinColumn(name = "file_id", referencedColumnName = "id")
-    private File fileId;
+    private File file;
 
     public Post() {
     }
@@ -78,20 +78,20 @@ public class Post {
         this.likes = likes;
     }
 
-    public User getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(User userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public File getFileId() {
-        return fileId;
+    public File getFile() {
+        return file;
     }
 
-    public void setFileId(File fileId) {
-        this.fileId = fileId;
+    public void setFile(File fileId) {
+        this.file = fileId;
     }
 
 

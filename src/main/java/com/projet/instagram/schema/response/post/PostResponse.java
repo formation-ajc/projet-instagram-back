@@ -2,9 +2,7 @@ package com.projet.instagram.schema.response.post;
 
 import com.projet.instagram.model.File;
 import com.projet.instagram.model.Post;
-import com.projet.instagram.model.User;
 import com.projet.instagram.schema.response.user.UserPublicResponse;
-import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
@@ -41,12 +39,12 @@ public class PostResponse {
             post.getDescription(),
             post.getLikes(),
             post.getPublishDate(),
-            (post.getUserId() != null)?
+            (post.getUser() != null)?
                 new UserPublicResponse(
-                    post.getUserId().getId(),
-                    post.getUserId().getFirstname(),
-                    post.getUserId().getLastname(),
-                    post.getUserId().getEmail()
+                    post.getUser().getId(),
+                    post.getUser().getFirstname(),
+                    post.getUser().getLastname(),
+                    post.getUser().getEmail()
                 ):null
         );
     }
